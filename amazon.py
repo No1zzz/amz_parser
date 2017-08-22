@@ -7,6 +7,8 @@ import copy
 import io
 import urllib
 import fileinput
+import time
+import re
 
 class AmazonBook:
     isEbook = False
@@ -22,11 +24,12 @@ class AmazonBook:
     asin = ''
     publishDate = ''
 
-def getBS_AmazonCOM(pages=1):
-    bs_url = 'https://www.amazon.com/Best-Sellers-Beauty-Bath-Bathing-Accessories/zgbs/beauty/'
+def getBS_AmazonCOM(pages=10):
+    bs_url = 'https://www.amazon.com/Best-Sellers-Womens-Pumps/zgbs/fashion/679416011'
 
     for page in range(pages):
-        r = requests.get(bs_url + 'ref=zg_bs_pg_' + str(page + 1) + '?_encoding=UTF8&pg=' + str(page + 1))
+        #time.sleep (3)
+        r = requests.get(bs_url + '/ref=zg_bs_pg_' + str(page + 1) + '?_encoding=UTF8&pg=' + str(page + 1))
         soup = BeautifulSoup(r.text, 'lxml')
         Books = []
         for item in soup.findAll('div', {'class': 'zg_itemImmersion'}):
@@ -54,42 +57,45 @@ def getBS_AmazonCOM(pages=1):
                 pass
 
             Books.append(copy.copy(b))
-        res = '\n'.join([book.asin for book in Books])
+
+        res = '\n'.join([book.asin for book in Books]) + '\n\t'
         print res
-        with open('asin.txt', 'w') as f:
-            f.write(res)
+        with io.open('asin.txt', 'a+') as f:
+            f.write(unicode(res))
+        f.close()
 
 def getBS_AmazonIMG():
 
     with open('asin.txt') as f:
         for url in f:
-            bs_url = 'https://www.amazon.com/dp/'+ url
-            print bs_url
+            time.sleep(3)
+            bs_url = 'https://www.amazon.com/dp/'+ url.strip()
+            print '\n' + 'New item'
+            print bs_url + '\n'
             r = requests.get(bs_url)
+            print r
             soup = BeautifulSoup(r.text, 'lxml')
             img = []
 
             imgs = soup.find("div", {"id": "imgTagWrapperId"}).find("img")
 
             data = json.loads(imgs["data-a-dynamic-image"])
-
-            filename = str(url) + '.jpg'
+            filename = url.strip() + '.jpg'
             x = 0
 
             for img in data:
                 if x == 1:
-                    print 'We got 1 image, skipping ' + url
+                    print 'We already got image, skipping ' + url.strip()
                     s = open("asin.txt").read()
-                    s = s.replace(url, '')
+                    s = s.replace(url.rstrip(), '\r')
                     f = open("asin.txt", 'w')
                     f.write(s)
                     f.close()
                     exit
                 else:
-                    print 'Saved ' + img
+                    print 'Saved ' + img + '\n'
                     x = x + 1
                     urllib.urlretrieve(img, filename)
-
 
 #getBS_AmazonCOM()
 getBS_AmazonIMG()
