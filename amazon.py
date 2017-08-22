@@ -5,6 +5,7 @@ from colorama import Fore, Back, Style
 import json
 import copy
 import io
+import urllib
 class AmazonBook:
     isEbook = False
     name = ''
@@ -170,21 +171,26 @@ def getBS_AmazonCOM(pages=1):
     #print(res)
 
 def getBS_AmazonIMG():
-    bs_url = 'https://www.amazon.com/dp/B06VXND7JF'
-    r = requests.get(bs_url)
-    soup = BeautifulSoup(r.text, 'lxml')
-    IMG = []
 
-    img = soup.find("div", {"id": "imgTagWrapperId"}).find("img")
+    print asin
 
-    data = json.loads(img["data-a-dynamic-image"])
+    for url in asin:
+        print asin
+        bs_url = 'https://www.amazon.com/dp/'+ url
+        r = requests.get(bs_url)
+        soup = BeautifulSoup(r.text, 'lxml')
+        img = []
 
-    for key in data.keys():
-        #with open('sadq123' + '.jpg', 'wb') as f:
-        #    f.write(data)
+        imgs = soup.find("div", {"id": "imgTagWrapperId"}).find("img")
 
-        print(key)
+        data = json.loads(imgs["data-a-dynamic-image"])
 
+        print data
+        filename = str(asin) + '.jpg'
+        for img in data:
+            print asin
+            urllib.urlretrieve(img, filename)
+            print img
 
     #print(list(data.keys()))
 
